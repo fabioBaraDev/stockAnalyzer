@@ -5,8 +5,6 @@ import pandas as pd
 import yfinance as yf
 from matplotlib.pylab import rcParams
 
-from get_stock_configuration import calculate_RSI
-
 rcParams['figure.figsize'] = 20, 8
 
 import warnings

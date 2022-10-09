@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import math
 import os
 import warnings
 from datetime import datetime
@@ -9,7 +8,7 @@ import pandas as pd
 import yfinance as yf
 import talib as ta
 
-from AcoesPromissoras.acoes import get_ativos_da_bolsa
+from acoes import get_ativos_da_bolsa
 
 warnings.filterwarnings('ignore')
 pd.set_option('display.max_rows', None)

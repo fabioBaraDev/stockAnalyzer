@@ -25,7 +25,6 @@ def run_buy_position():
         result = get_estategia(stock_name, startDate, endDate, sht, lng)
 
         if result.tail(1)['action'][0] == 'buy':
-
             plot_it(stock_name, startDate, endDate, sht, lng, path)
             result.to_csv(path + stock_name + ' - ' + str(sht) + ' - ' + str(lng) + '.csv', index=False)
 
@@ -42,7 +41,6 @@ def run_buy_position():
 def plot_it(ticker, startDate, endDate, exp_sht, exp_lng, path):
     kc = yf.download(ticker, start=startDate, end=endDate)
     kc = calculate_RSI(kc)
-
 
     stocksac = kc['Adj Close']
     stocksac.head()
