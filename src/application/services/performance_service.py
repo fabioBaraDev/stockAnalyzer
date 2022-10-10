@@ -74,7 +74,7 @@ class PerformanceService:
                     except:
                         print('{}: ERRO'.format(stock_name))
 
-        result_list.sort_values(by='AnualRatePercent', ascending=False)[:50]
+        result_list.sort_values(by='AnnualRatePercent', ascending=False)[:50]
 
         return result_list
 
@@ -216,8 +216,8 @@ class PerformanceService:
         year_diff = month_diff / 12
 
         # Calcular as taxas de retorno
-        result['AnualRatePercent'] = (result['finalReturn'] ** (1 / year_diff) - 1) * 100
-        result['MounthRatePercent'] = (result['finalReturn'] ** (1 / month_diff) - 1) * 100
+        result['AnnualRatePercent'] = (result['finalReturn'] ** (1 / year_diff) - 1) * 100
+        result['MonthRatePercent'] = (result['finalReturn'] ** (1 / month_diff) - 1) * 100
         result['Parameters'] = parameters
         result['finalReturn'] = (result['finalReturn'] - 1) * 100
         result['RSI'] = rsi

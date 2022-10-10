@@ -1,0 +1,12 @@
+services:
+  postgres:
+    restart: always
+    container_name: stocks_postgres
+    image: postgres
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    ports:
+      - 5433:5432
+    volumes:
+      - ./scripts/data_base.sql:/docker-entrypoint-initdb.d/data_base.sql

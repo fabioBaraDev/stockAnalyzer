@@ -7,8 +7,11 @@
     if you are using MAC we recomend you to use brew (brew install ta-lib)
 
 * To install packages you must run: 
-  * `pip3 install -r requirements.txt`
+  * `make install`
 
 
 * To run this project you must use python 3.9 and run the following command on terminal at the root project folder:
-  * `python3 main.py`
+
+
+  1. `make db/run`
+  2. `python3 main.py`

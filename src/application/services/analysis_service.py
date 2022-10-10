@@ -68,11 +68,11 @@ class AnalysisService:
 
         # Calcular a diferença entre o primeiro e ultima dia do dataframe
 
-        mounth_diff = (stocks.index[-1] - stocks.index[0]) / np.timedelta64(1, 'M')
-        year_diff = mounth_diff / 12
+        month_diff = (stocks.index[-1] - stocks.index[0]) / np.timedelta64(1, 'M')
+        year_diff = month_diff / 12
 
-        result['AnualRatePercent'] = (result['final_return'] ** (1 / year_diff) - 1) * 100
-        result['MounthRatePercent'] = (result['final_return'] ** (1 / mounth_diff) - 1) * 100
+        result['AnnualRatePercent'] = (result['final_return'] ** (1 / year_diff) - 1) * 100
+        result['MonthRatePercent'] = (result['final_return'] ** (1 / month_diff) - 1) * 100
         result['Parameters'] = parameters
 
         self._evaluate_stock(stock_action, exec_param.initial_amount, 'df')
