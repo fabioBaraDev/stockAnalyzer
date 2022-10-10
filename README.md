@@ -4,7 +4,7 @@
 
 # Usage 
     To run this project you most install ta-lib (https://mrjbq7.github.io/ta-lib/index.html)
-    if you are using we recomend you to use brew (brew install ta-lib)
+    if you are using MAC we recomend you to use brew (brew install ta-lib)
 
 * To install packages you must run: 
   * `pip3 install -r requirements.txt`

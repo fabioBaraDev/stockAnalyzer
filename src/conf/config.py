@@ -1,4 +1,4 @@
-def get_ativos_da_bolsa():
+def get_brazilian_tickers():
     ativos = ['CSNA3',
               'LWSA3',
               'VALE3',
@@ -18,7 +18,6 @@ def get_ativos_da_bolsa():
               'BPAN4',
               'PETR4',
               'RENT3',
-              'LCAM3',
               'BRAP4',
               'BPAC11',
               'LREN3',
@@ -36,7 +35,6 @@ def get_ativos_da_bolsa():
               'CCRO3',
               'RAIL3',
               'BRML3',
-              'BIDI11',
               'GGBR4',
               'USIM5',
               'GOAU4',
