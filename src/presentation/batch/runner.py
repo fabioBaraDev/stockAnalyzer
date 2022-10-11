@@ -13,7 +13,7 @@ def run():
     execution_service = ExecutionService(postgres_repository)
     file_repository = FileRepository()
     analysis_service = AnalysisService()
-    performance_service = PerformanceService(file_repository)
+    performance_service = PerformanceService(file_repository, postgres_repository)
     ticker_service = TickerService(file_repository, analysis_service, performance_service, execution_service)
 
     dt = ticker_service.execute_buy_position()

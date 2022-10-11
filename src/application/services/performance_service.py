@@ -9,6 +9,7 @@ from pandas import DataFrame, Series
 
 from src.domain.model.execution import Execution
 from src.infrastructure.adapters.repository.file_repository import FileRepository
+from src.infrastructure.adapters.repository.postgres_repository import PostgresRepository
 
 warnings.filterwarnings('ignore')
 pd.set_option('display.max_rows', None)
@@ -16,8 +17,9 @@ pd.set_option('display.max_rows', None)
 
 class PerformanceService:
 
-    def __init__(self, file_repository: FileRepository):
+    def __init__(self, file_repository: FileRepository, repository: PostgresRepository):
         self.file_repository = file_repository
+        self.repository = repository
 
     def get_performance(self, exec_param: Execution, stocks: Union[DataFrame, Series]):
 
@@ -52,27 +54,22 @@ class PerformanceService:
     def _calculate_avg_ordered_by_the_best_final_result(self, exec_param: Execution, stock_sac):
         result_list = pd.DataFrame()
 
-        # Percorrendo a lista com as médias móveis curtas
-        for i in range(len(exec_param.sht_period)):
-            sht_period = exec_param.sht_period[i]
+        configurations = self.repository.get_sht_lng_configuration()
 
-            # Para cada média móvel curta, cruzamos a lista das médias móveis longas
-            for j in range(len(exec_param.lng_period)):
-                lng_period = exec_param.lng_period[j]
-                parameters = str(sht_period) + ' - ' + str(lng_period)
+        # Percorrendo a lista com as médias móveis curtas e longas
+        for conf in configurations:
+            parameters = str(conf.sht) + ' - ' + str(conf.lng)
 
-                # Percorremos a lista de ativos
-                for stock_name in list(stock_sac.columns):
-                    try:
-
-                        # Chamamos a função returns_stocks passando todos os parâmetros para a função
-                        result = self._returns_stock(stock_name, sht_period, lng_period, stock_sac,
-                                                     exec_param.initial_amount,
-                                                     parameters)
-                        print('{}: OK'.format(stock_name))
-                        result_list = pd.concat([result_list, result])
-                    except:
-                        print('{}: ERRO'.format(stock_name))
+            # Percorremos a lista de ativos
+            for stock_name in list(stock_sac.columns):
+                try:
+                    # Chamamos a função returns_stocks passando todos os parâmetros para a função
+                    result = self._returns_stock(stock_name, conf.sht, conf.lng, stock_sac,
+                                                 exec_param.initial_amount, parameters)
+                    print('{}: OK'.format(stock_name))
+                    result_list = pd.concat([result_list, result])
+                except:
+                    print('{}: ERRO'.format(stock_name))
 
         result_list.sort_values(by='AnnualRatePercent', ascending=False)[:50]
 

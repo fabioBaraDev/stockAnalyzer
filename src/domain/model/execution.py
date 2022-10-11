@@ -9,8 +9,6 @@ class Execution(object):
     start_date: str
     end_date: str
     path: str
-    sht_period: [int]
-    lng_period: [int]
     initial_amount: int
 
     @classmethod
@@ -30,12 +28,10 @@ class Execution(object):
             os.mkdir(path + '/buy')
 
         if not days:
-            days = 1905
+            days = 730
 
         start_date = datetime.today() - timedelta(days=days)
         end_date = datetime.today().strftime('%Y-%m-%d')
-        sht_period = [10, 20, 30]
-        lng_period = [50, 60, 90]
         initial_amount = 1000
 
-        return Execution(symbols, start_date, end_date, path, sht_period, lng_period, initial_amount)
+        return Execution(symbols, start_date, end_date, path, initial_amount)
