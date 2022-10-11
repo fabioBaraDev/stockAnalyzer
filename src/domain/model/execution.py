@@ -1,8 +1,6 @@
 import os
 from dataclasses import dataclass
-from datetime import datetime
-
-from src.conf.config import get_brazilian_tickers
+from datetime import datetime, timedelta
 
 
 @dataclass(frozen=True, eq=True)
@@ -16,8 +14,13 @@ class Execution(object):
     initial_amount: int
 
     @classmethod
-    def build(cls) -> "Execution":
-        path = os.getcwd() + '/reports'
+    def build(cls, symbols) -> "Execution":
+
+        path = os.environ.get("S3_PATH")
+        days = os.environ.get("DAYS")
+        if not path:
+            path = os.getcwd() + '/reports'
+
         if not os.path.isdir(path):
             os.mkdir(path)
         path = path + '/' + datetime.today().strftime('%Y-%m-%d')
@@ -26,10 +29,11 @@ class Execution(object):
         if not os.path.isdir(path + '/buy'):
             os.mkdir(path + '/buy')
 
-        symbols = get_brazilian_tickers()
-        start_date = '2020-07-10'
+        if not days:
+            days = 1905
+
+        start_date = datetime.today() - timedelta(days=days)
         end_date = datetime.today().strftime('%Y-%m-%d')
-        path = path
         sht_period = [10, 20, 30]
         lng_period = [50, 60, 90]
         initial_amount = 1000
