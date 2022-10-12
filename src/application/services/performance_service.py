@@ -8,7 +8,6 @@ import talib as ta
 from pandas import DataFrame, Series
 
 from src.domain.model.execution import Execution
-from src.infrastructure.adapters.repository.file_repository import FileRepository
 from src.infrastructure.adapters.repository.postgres_repository import PostgresRepository
 
 warnings.filterwarnings('ignore')
@@ -17,8 +16,7 @@ pd.set_option('display.max_rows', None)
 
 class PerformanceService:
 
-    def __init__(self, file_repository: FileRepository, repository: PostgresRepository):
-        self.file_repository = file_repository
+    def __init__(self, repository: PostgresRepository):
         self.repository = repository
 
     def get_performance(self, exec_param: Execution, stocks: Union[DataFrame, Series]):
@@ -34,21 +32,20 @@ class PerformanceService:
         new_df = result_list.copy().reset_index()
 
         data = self._order_data_by_final_return(new_df)
-        self.file_repository.save_csv_data(data, exec_param)
-
+        self.repository.save_performances(data)
         return data
 
     def _order_data_by_final_return(self, data: pd.DataFrame):
-        ordered = data.groupby(by=['index', 'Parameters'])[['finalReturn']]
-        ordered.max().sort_values(by='finalReturn', ascending=False)
+        ordered = data.groupby(by=['index', 'configuration_id'])[['final_return']]
+        ordered.max().sort_values(by='final_return', ascending=False)
 
         g = data.copy()
 
-        g.set_index(['index', 'Parameters'])
-        g.sort_values(['index', 'finalReturn'], ascending=False)
-        n = g.sort_values(['index', 'finalReturn'], ascending=False)
-        res = n.groupby(['index', 'Parameters']).max().sort_values(['finalReturn', 'index'], ascending=False)
-        res = res.loc[res['finalReturn'] > 0]
+        g.set_index(['index', 'configuration_id'])
+        g.sort_values(['index', 'final_return'], ascending=False)
+        n = g.sort_values(['index', 'final_return'], ascending=False)
+        res = n.groupby(['index', 'configuration_id']).max().sort_values(['final_return', 'index'], ascending=False)
+        res = res.loc[res['final_return'] > 0]
         return res
 
     def _calculate_avg_ordered_by_the_best_final_result(self, exec_param: Execution, stock_sac):
@@ -56,22 +53,24 @@ class PerformanceService:
 
         configurations = self.repository.get_sht_lng_configuration()
 
+        print('Starting performance calculation')
         # Percorrendo a lista com as médias móveis curtas e longas
         for conf in configurations:
-            parameters = str(conf.sht) + ' - ' + str(conf.lng)
 
             # Percorremos a lista de ativos
             for stock_name in list(stock_sac.columns):
                 try:
+                    stock_id = exec_param.symbols[stock_name].id
                     # Chamamos a função returns_stocks passando todos os parâmetros para a função
-                    result = self._returns_stock(stock_name, conf.sht, conf.lng, stock_sac,
-                                                 exec_param.initial_amount, parameters)
-                    print('{}: OK'.format(stock_name))
+                    result = self._returns_stock(conf, stock_id, stock_name, stock_sac,
+                                                 exec_param.initial_amount)
+                    result['configuration'] = conf
                     result_list = pd.concat([result_list, result])
-                except:
+                except Exception as e:
                     print('{}: ERRO'.format(stock_name))
-
-        result_list.sort_values(by='AnnualRatePercent', ascending=False)[:50]
+                    print(str(e))
+        print('Finished performance calculation')
+        result_list.sort_values(by='annual_rate_percent', ascending=False)[:50]
 
         return result_list
 
@@ -91,7 +90,7 @@ class PerformanceService:
 
         return list(data_evaluation.T.columns)
 
-    def _evaluate_stock(self, stock_action, initial_amount, stock_name, return_type='finalReturn'):
+    def _evaluate_stock(self, stock_action, initial_amount, stock_name, return_type='final_return'):
         ## Criando as variáveis de cashflow
 
         cashstart = np.zeros(len(stock_action))
@@ -137,14 +136,14 @@ class PerformanceService:
 
         if return_type == 'df':
             return returndf
-        elif return_type == 'finalReturn':
+        elif return_type == 'final_return':
             profit = cashend[-1] / initial_amount
             # print('Retorno apurado pela operação foi de {} ' .format(profit.round(2)),'%')
             return profit
         else:
             return print("Tipo de retorno inválido")
 
-    def _create_stock_action(self, stock_name, sht_period, lng_period, stocksac):
+    def _create_stock_action(self, stock_name, configuration, stocksac):
         global stock_action
         # criando o dataframe com as ações
         stock = stocksac[[stock_name]]
@@ -154,8 +153,8 @@ class PerformanceService:
 
         # cria as médias móveis de curto e longo prazo
         # stock['Sht'] = stock[stock_name].rolling(sht_period).mean()
-        stock['Lng'] = stock[stock_name].rolling(lng_period).mean()
-        stock['Sht'] = stock[stock_name].ewm(span=sht_period).mean()
+        stock['Lng'] = stock[stock_name].rolling(configuration.lng).mean()
+        stock['Sht'] = stock[stock_name].ewm(span=configuration.sht).mean()
         # stock['Lng'] = stock[stock_name].ewm(span=lng_period).mean()
 
         # excluir os dias que não temos as 2 médias móveis
@@ -205,25 +204,26 @@ class PerformanceService:
         else:
             return [stock_action, stock]
 
-    def _evaluate_returns(self, final_return, stock_name, stock, parameters, rsi):
-        result = pd.DataFrame([[final_return]], columns=['finalReturn'], index=[stock_name])
+    def _evaluate_returns(self, configuration_id, stock_id, stock_name, final_return, stock, rsi):
+        result = pd.DataFrame([[final_return]], columns=['final_return'], index=[stock_name])
+        result['stock_id'] = stock_id
 
         # Calcular a diferença entre o primeiro e ultima dia do dataframe
         month_diff = (stock.index[-1] - stock.index[0]) / np.timedelta64(1, 'M')
         year_diff = month_diff / 12
 
         # Calcular as taxas de retorno
-        result['AnnualRatePercent'] = (result['finalReturn'] ** (1 / year_diff) - 1) * 100
-        result['MonthRatePercent'] = (result['finalReturn'] ** (1 / month_diff) - 1) * 100
-        result['Parameters'] = parameters
-        result['finalReturn'] = (result['finalReturn'] - 1) * 100
+        result['annual_rate_percent'] = (result['final_return'] ** (1 / year_diff) - 1) * 100
+        result['month_rate_percent'] = (result['final_return'] ** (1 / month_diff) - 1) * 100
+        result['configuration_id'] = configuration_id
+        result['final_return'] = (result['final_return'] - 1) * 100
         result['RSI'] = rsi
         return result
 
-    def _returns_stock(self, stock_name, sht_period, lng_period, stock_sac, initial_amount, parameters):
+    def _returns_stock(self, configuration, stock_id, stock_name, stock_sac, initial_amount):
         # executa todas as funções do script
-        stock_action = self._create_stock_action(stock_name, sht_period, lng_period, stock_sac)[0]
-        stock = self._create_stock_action(stock_name, sht_period, lng_period, stock_sac)[1]
+        stock_action = self._create_stock_action(stock_name, configuration, stock_sac)[0]
+        stock = self._create_stock_action(stock_name, configuration, stock_sac)[1]
         final_return = self._evaluate_stock(stock_action, initial_amount, stock_name)
         rsi = ta.RSI(stock_sac[stock_name].dropna(), timeperiod=14).tail(1)[0]
-        return self._evaluate_returns(final_return, stock_name, stock, parameters, rsi)
+        return self._evaluate_returns(configuration.id, stock_id, stock_name, final_return, stock, rsi)

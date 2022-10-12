@@ -14,13 +14,15 @@ BEGIN;
     CREATE TABLE IF NOT EXISTS performances (
       id SERIAL PRIMARY KEY,
       ticker_id INT NOT NULL,
+      configuration_id INT NOT NULL,
       update_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      index VARCHAR(200) NOT NULL,
-      parameters VARCHAR(200) NOT NULL,
       final_return NUMERIC NOT NULL,
       annual_rate_percent NUMERIC NOT NULL,
       month_rate_percent NUMERIC NOT NULL,
       rsi NUMERIC NOT NULL,
+      CONSTRAINT fk_configuration_analysis
+        FOREIGN KEY(configuration_id)
+      REFERENCES analysis_configuration(id),
       CONSTRAINT fk_performances_tickers
         FOREIGN KEY(ticker_id)
       REFERENCES ticker(id)
@@ -45,13 +47,14 @@ BEGIN;
 
     CREATE TABLE IF NOT EXISTS recent_recommendation (
         analysis_id INT NOT NULL,
-        update_at TIMESTAMP NOT NULL
+        update_at TIMESTAMP NOT NULL,
         CONSTRAINT fk_recent_recommendation
             FOREIGN KEY(analysis_id)
         REFERENCES analysis(id)
-    )
+    );
 
 COMMIT;
+
 BEGIN;
  INSERT INTO ticker(name) VALUES
         		('CSNA3.SA'),('LWSA3.SA'),('VALE3.SA'),('IGTI11.SA'),('COGN3.SA'),('DXCO3.SA'),('POSI3.SA'),('CSAN3.SA'),
@@ -65,10 +68,10 @@ BEGIN;
                 ('BBDC4.SA'),('VBBR3.SA'),('BBSE3.SA'),('CPFE3.SA'),('MGLU3.SA'),('EQTL3.SA'),('CASH3.SA'),('QUAL3.SA'),
                 ('ENGI11.SA'),('RRRP3.SA'),('EGIE3.SA'),('CMIG4.SA'),('IRBR3.SA'),('TAEE11.SA'),('WEGE3.SA'),('KLBN11.SA'),
                 ('VIVT3.SA'),('CPLE6.SA'),('RADL3.SA'),('ABEV3.SA'),('HYPE3.SA'),('TOTS3.SA'),('SUZB3.SA'),('JBSS3.SA'),
-                ('TIMS3.SA')
+                ('TIMS3.SA');
 
     INSERT INTO analysis_configuration(sht, lng) VALUES (10, 50), (10, 60), (10, 90), (20, 50),
-                                                        (20, 60), (20, 90), (30, 50), (30, 60), (30, 90)
+                                                        (20, 60), (20, 90), (30, 50), (30, 60), (30, 90);
 
 COMMIT;
 

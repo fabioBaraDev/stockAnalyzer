@@ -2,10 +2,12 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+from src.domain.model.ticker import Ticker
+
 
 @dataclass(frozen=True, eq=True)
 class Execution(object):
-    symbols: [str]
+    symbols: dict[str, Ticker]
     start_date: str
     end_date: str
     path: str

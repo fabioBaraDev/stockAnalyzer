@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from src.domain.model.execution import Execution
-from src.domain.model.ticker import Ticker
+from src.domain.model.moving_average_calculator import MovingAverageCalculator
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -12,7 +12,7 @@ warnings.filterwarnings('ignore')
 
 class AnalysisService:
 
-    def get_analysis(self, ticker: Ticker, exec_param: Execution):
+    def get_analysis(self, ticker: MovingAverageCalculator, exec_param: Execution):
 
         stocks = copy.deepcopy(ticker.data_frame)
 
@@ -71,9 +71,9 @@ class AnalysisService:
         month_diff = (stocks.index[-1] - stocks.index[0]) / np.timedelta64(1, 'M')
         year_diff = month_diff / 12
 
-        result['AnnualRatePercent'] = (result['final_return'] ** (1 / year_diff) - 1) * 100
-        result['MonthRatePercent'] = (result['final_return'] ** (1 / month_diff) - 1) * 100
-        result['Parameters'] = parameters
+        result['annual_rate_percent'] = (result['final_return'] ** (1 / year_diff) - 1) * 100
+        result['month_rate_percent'] = (result['final_return'] ** (1 / month_diff) - 1) * 100
+        result['parameters'] = parameters
 
         self._evaluate_stock(stock_action, exec_param.initial_amount, 'df')
         stock_action['Stop_loss'] = stock_action['Adj Close'] * 0.9
@@ -82,7 +82,7 @@ class AnalysisService:
 
         return stock_action
 
-    def _evaluate_stock(self, stock_action, initial_amount, return_type='finalReturn'):
+    def _evaluate_stock(self, stock_action, initial_amount, return_type='final_return'):
         global returndf
 
         cashstart = np.zeros(len(stock_action))
@@ -124,7 +124,7 @@ class AnalysisService:
         returndf.columns = 'cashstart stockstart stockprice volumebought volumesold stockend cashend'.split(' ')
         if return_type == 'df':
             return returndf
-        elif return_type == 'finalReturn':
+        elif return_type == 'final_return':
             profit = (cashend[-1] / initial_amount) - 1
             # print('Retorno apurado pela operação foi de {} ' .format(profit.round(2)),'%')
             return profit
